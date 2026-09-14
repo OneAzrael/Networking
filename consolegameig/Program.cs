@@ -4,8 +4,17 @@ using consolegameig;
 
 HttpClient client = new HttpClient();
 
-CatFact? catFact = await client.GetFromJsonAsync<CatFact>( "https://catfact.ninja/fact");
+int totalLength = 0;
 
-Console.WriteLine(catFact.Fact);
-Console.WriteLine(catFact.Fact);
+for (int i = 1; i <= 5; i++)
+{
+    CatFact? catFact = await client.GetFromJsonAsync<CatFact>("https://catfact.ninja/fact");
 
+    Console.WriteLine($"Cat Fact: number #{i}");
+    Console.WriteLine(catFact.Fact);
+    Console.WriteLine();
+    
+    totalLength += catFact?.Length ?? 0;
+}
+
+Console.WriteLine($"Fun fact these 5 facts are {totalLength} Characters long :)");
