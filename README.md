@@ -65,3 +65,41 @@ Deserialization is what turns the first part into the second `GetFromJsonAsync<C
 ```
 Cats sleep 70% of their lives.
 ```
+
+# 
+# 02 - Post
+
+## 1. What is the difference between  `GET`  and  `POST`?
+
+The difference  is on the way out, get, gets only usses url and doesnt request body, as post is the same but it sends to an url with a body of data such as what we did in this section, both **receive back** a status code and a response body
+
+
+## 2. Where can you see the body of the request?
+
+We can see the see the body of the request in the webhook and what was being sent to the server or what is sent.
+
+```mermaid
+sequenceDiagram
+    participant C as program (client)
+    participant S as Server
+
+    Note over C,S: GET — nothing goes out with the request
+    C->>S: GET
+    S-->>C: 200 OK + response body
+
+    Note over C,S: POST — a body goes out with the request
+    C->>S: POST /webhook + JSON body
+    S-->>C: 200 OK + response body
+```
+
+## 3. What format are we using to send the data?
+
+We are usin JSON format to send over first we serilaize it into json then send it over
+
+## 4. What does serialization mean?
+
+Serialization is turning an object in memory into a format that can be sent or stored, on this progtam my `PostData` object only exist inside the program the  `PostAsJsonAsync` serialized it into the json string that showed up in webhook site
+
+## 5. Why do the client and server need to agree on the names and types of fields?
+
+The client and server never share code, they only share the JSON text between them. the names are the only link, if i send for example `username` but the server wants just `name` nothing will crash the request will pass and reutn 200, but it arrives empty or as a default thats why they need to share the same names and types of fields because it wont crash it will just fail silently
