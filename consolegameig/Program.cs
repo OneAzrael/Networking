@@ -1,95 +1,88 @@
-﻿using System.Net.Http.Json;
-using consolegameig;
+﻿namespace consolegameig;
 
-HttpClient client = new HttpClient();
-
-string apiUrl = "https://catfact.ninja/fact";
-string databaseUrl = "https://hooks.zapier.com/hooks/catch/8338993/ujs9jj9/";
-string webhookUrl = "https://webhook.site/ebf18532-63a8-4b0b-a1d2-e53b3e5cec1b";
-string scoreboardUrl = "https://script.google.com/macros/s/AKfycbys5aEPMvNCutyhNYYCcQcCjzsi2UtqNspmKyCH-AicJxJbCJMrAoT0LUaYaXhTWA8n/exec";
-HttpResponseMessage response;
-
-int totalLength = 0;
-
-
-
-
-//-- Get section --
-for (int i = 1; i <= 5; i++)
+class Program
 {
-    CatFact? catFact = await client.GetFromJsonAsync<CatFact>(apiUrl);
-
-    Console.WriteLine($"Cat Fact: number #{i}");
-    Console.WriteLine(catFact?.Fact);
-    Console.WriteLine();
-    
-    totalLength += catFact?.Length ?? 0;
-}
-
-Console.WriteLine($"Fun fact these 5 facts are {totalLength} Characters long :)");
-
-
-
-
-//-- Post section --
-PostData data = new PostData
-{
-    name = "Azrael",
-    health = 100,
-    level = 5,
-    alive = true
-};
-
-response = await client.PostAsJsonAsync(webhookUrl, data);
-
-Console.WriteLine(response.StatusCode);
-Console.WriteLine(response.IsSuccessStatusCode);
-
-
-
-//-- Post game data Section --
-/*
- 
-Console.WriteLine("Please enter your name:");
-string name = Console.ReadLine() ?? "";
-
-Console.WriteLine("Please enter your score:");
-string? scoreInput = Console.ReadLine();
-
-if (int.TryParse(scoreInput, out int score))
-{
-    GameData gameData = new GameData
+    static async Task Main(string[] args)
     {
-        name = name,
-        score = score
-    };
-    
-    Console.WriteLine("Submitting");
-    response = await client.PostAsJsonAsync(databaseUrl, gameData);
-    Console.WriteLine(response.IsSuccessStatusCode ? "Score Submitted Successfully" : $"Score Submitted Failed {response.StatusCode}");
-}
-else
-{
-    Console.WriteLine("Score needs to be a number!");
-}
+        ScoreboardApi api = new ScoreboardApi();
+        bool running = true;
 
-*/
-
-//-- Get game data Section --
-    List<GameData> scores = await client.GetFromJsonAsync<List<GameData>>(scoreboardUrl);
-
-    if (scores != null)
-    {
-        foreach (GameData entry in scores)
+        while (running)
         {
-            Console.WriteLine($"{entry.name}: {entry.score}");
+            Console.WriteLine();
+            Console.WriteLine("=== SCOREBOARD ===");
+            Console.WriteLine();
+            Console.WriteLine("1. Submit Score");
+            Console.WriteLine("2. View Scoreboard");
+            Console.WriteLine("3. Exit");
+            Console.WriteLine();
+            Console.WriteLine("==================");
+            Console.Write("Choose: ");
+
+            string choice = Console.ReadLine() ?? "";
+
+            switch (choice)
+            {
+                case "1":
+                    await SubmitFlow(api);
+                    break;
+                case "2":
+                    await GetFlow(api);
+                    break;
+                case "3":
+                    running = false;
+                    break;
+                default:
+                    Console.WriteLine("Not a valid option.");
+                    break;
+            }
         }
     }
-    
-    var sortedScores = scores.OrderByDescending(x => x.score);
-    var topTen = scores.OrderByDescending(x => x.score).Take(10);
-    Console.WriteLine("=== LEADERBOARD ===");
-    foreach (var entry in topTen)
+
+    static async Task SubmitFlow(ScoreboardApi api)
     {
-        Console.WriteLine($"{entry.name}: {entry.score}");
+        Console.WriteLine("Name: ");
+        string name = Console.ReadLine();
+
+        if (string.IsNullOrEmpty(name))
+        {
+            Console.WriteLine("Name is empty.");
+            return;
+        }
+        
+        Console.WriteLine("Score: ");
+        string score = Console.ReadLine();
+
+        if (!int.TryParse(score, out int scoreNumber))
+        {
+            Console.WriteLine("Score Has to be a number");
+        }
+        
+        GameData data = new GameData() { name = name, score = scoreNumber };
+        bool success = await api.SubmitScore(data);
+        
+        Console.WriteLine(success ? "Score submitted!" : "Could not submit score.");
     }
+
+    static async Task GetFlow(ScoreboardApi api)
+    {
+        Console.WriteLine("Loading scoreboard...");
+        
+        List<GameData> scores = await api.GetScores();
+
+        if (scores.Count == 0)
+        {
+            Console.WriteLine("No scores found.");
+            return;
+        }
+        
+        List<GameData> sortedScores = scores.OrderByDescending(s => s.score).Take(10).ToList();
+        
+        Console.WriteLine("=== Leaderboard ===");
+
+        for (int i = 0; i < sortedScores.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}. {sortedScores[i].name, -12} {sortedScores[i].score}");
+        }
+    }
+}

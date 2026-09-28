@@ -8,3 +8,4 @@ public class PostData
     public bool alive { get; set; } = true;    
     public int score { get; set; } = 0;
 }
+
